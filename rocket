@@ -1,0 +1,14 @@
+speed	= 4
+size = 225
+
+r = stamp('rocket',size)
+fill('sun')
+
+function touching() {
+  spot	= x - 384
+  thrust = (750 - y) / 100 * speed
+  r.move('up', thrust)
+  r.rotate(spot/2)
+  r.tap = sound('splash')
+}
+ 
