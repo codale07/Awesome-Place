@@ -1,0 +1,28 @@
+speed	= 10
+size	= 150
+
+fill('ballpark')
+sound('ballgame')
+piggy = stamp('apple',29)
+
+speed	= 10
+size	= 150
+
+jp = stamp('pineapple',45)
+
+o	= stamp('pen', 40)
+
+function touching() {
+  spot	= x - 384
+  thrust = (750 - y) / 290 * speed
+  jp.move('up',thrust)
+  jp.rotate(spot)
+  spot	= x - 384
+  thrust = (750 - y) / 260 * speed
+  piggy.move('up',thrust)
+  piggy.rotate(spot)
+  spot	= x - 384
+  thrust = (750 - y) / 230 * speed
+  o.move('up',thrust)
+  o.rotate(spot)
+} 
