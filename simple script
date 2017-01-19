@@ -1,0 +1,4 @@
+fill('canvas')
+function drag() {
+  stamp('splotch',x,y,45)
+}
