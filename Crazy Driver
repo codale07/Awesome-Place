@@ -1,0 +1,15 @@
+speed    = 4
+size     = 125
+steering = 20
+
+car   = stamp('car', size)
+wheel = stamp('steering',384,1000)
+fill('roads')
+text('                          SLOW!')
+
+function touching() {
+  spot = x - 384
+  car.move('up', speed)
+  car.rotate('right',spot/steering)
+  wheel.rotate(spot/5)
+}
