@@ -1,0 +1,18 @@
+fill('park')
+girl = stamp('girl')
+boy = stamp('boy')
+ball = stamp('ball')
+function
+tap() {
+6
+girl.move (x,y,
+350
+)
+7
+boy.move(x,y,
+2000
+)
+8
+ball.move (x,y,
+1000)
+}
