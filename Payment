@@ -1,0 +1,190 @@
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import {merge, assign, isEmpty, map, find} from 'lodash'
+import Form from "react-jsonschema-form"
+
+import {nestDataByLevels, getNestedData} from './../models/modelUtil'
+//import { Popover, PopoverContent } from 'reactstrap';
+import paymentActions from '../actions/payments'
+import vendors from '../actions/vendors'
+import vendorWeddingActions from '../actions/vendorWeddings'
+
+import cuid from 'cuid'
+
+const noop = () => {}
+
+
+class AddPayment extends Component {
+
+    constructor(props) {
+        super(props)
+        this.state = {
+            paymentData:{},
+            vendorData: props.vendors,
+            vendorWeddingData: props.vendorWeddings,
+            popupOpen: false,
+            hasErrors   : false, // if the form has JS errors
+            newId       : null, // id passed when a new object is created
+        }
+        console.log(props.vendors) // Umm, this seems necessary for the vendorData to be valid??
+    }
+    
+    
+    toggle = () => {
+        this.setState({
+                      popupOpen: !this.state.popupOpen,
+                      })
+    }
+    
+    renderButtons(success = noop) {
+        return <div>
+        {this.props.toggle && <button type="button" onClick={this.props.toggle} className="btn btn-default">Cancel</button> }
+        <button type="submit" onClick={success} className="btn btn-primary">Submit</button>
+        </div>
+    }
+
+    saveData = () => {
+        let data = this.state.paymentData
+        
+            // if there isn't any data worth saving, bail
+        if (isEmpty(data)) {
+            return;
+        }
+        
+        if (data.isSecurityDeposit) {
+            data.depositCollectedDate = data.paymentDate
+            //data.paymentDate = null
+        }
+        else {
+            data.isSecurityDeposit = false
+            data.paidDate = data.paymentDate
+            //data.paymentDate = null
+        }
+        //search for vendorweddings with this vendor_id
+        if (!this.state.vendorWeddingData || this.state.vendorWeddingData.length === 0) {
+            this.props.getVendorWeddings()
+            this.state.vendorWeddingData = this.props.vendorWeddings
+        }
+        //console.log("########################################")
+        //console.log(data)
+        //console.log(this.state.vendorWeddingData)
+        //console.log(find(this.state.vendorWeddingData, {'vendor': data.vendor_id}))
+        data.vendorWedding = find(this.state.vendorWeddingData, {'vendor': data.vendor_id})
+        data.vendor_id = null
+        this.props.createOrUpdatePayment(data)
+    }
+    
+    handleChange = (data) => {
+        // TODO: error handling?
+        this.setState({paymentData:data.formData})
+    }
+
+    
+    render() {
+        //console.log("$$$$$$$")
+        //console.log(this.state.vendorData)
+        //const vendor_names = this.state.vendorData.map("name");
+        if (!this.state.vendorData || this.state.vendorData.length === 0) {
+            this.props.getVendors()
+            this.state.vendorData = this.props.vendors
+        }
+        //if (!this.state.vendorWeddingData || this.state.vendorWeddingData.length === 0) {
+        //    this.props.getVendorWeddings()
+        //    this.state.vendorWeddingData = this.props.vendorWeddingData
+        //}
+
+        const vendor_names = map(this.state.vendorData, 'name');
+        const vendor_ids = map(this.state.vendorData, 'id');
+        const schema={
+            "type": "object",
+            properties: {
+                // Future payments with due date would be entered by BPO
+                vendor_id: { // TODO: verify USD?
+                    title: `Vendor:`,
+                    "type": "number",
+                    "enum": vendor_ids,
+                    "enumNames": vendor_names,
+                },
+                amount: { // TODO: verify USD?
+                    title: `Payment Amount:`,
+                    "type": "number",
+                    "minLength": 1,
+                },
+                paymentDate: {
+                    title: `When did you make the payment/collect the deposit?`,
+                    "type": "string",
+                    "minLength": 1,
+                },
+                method: {
+                    title: `How did you make the payment? (cash, check, ..)`,
+                    "type": "string",
+                    "minLength": 1,
+                },
+                isSecurityDeposit: {
+                    title: `Is this a security deposit?`,
+                    "type": "boolean",
+                    "minLength": 1,
+                },
+                note: {
+                    title: `Notes`,
+                    "type": "string",
+                    "minLength": 1,
+                },
+            },
+        }
+
+    const uiSchema= {
+        amount: {
+        "ui:widget": "updown"
+        },
+        paymentDate: {
+            "ui:widget": "alt-date"
+        }
+    }
+        return (
+                <div>
+                            "hi!"
+                <Form
+                    formData={this.state.paymentData}
+                    showErrorList={false}
+                    onChange={(data) => {
+                        this.handleChange(data)
+                    }} // implement this for data input checks
+                    schema={schema}
+                    uiSchema= {uiSchema}
+                    onSubmit={this.saveData}
+                >
+                    //{this.renderButtons()}
+                </Form>
+                "bye"
+                </div>
+                
+                )
+    }
+}
+
+/*AddPayment.propTypes = {
+    plan: React.PropTypes.object,
+}*/
+
+AddPayment = connect((state, props) => {
+    return {}
+}, (dispatch) => {
+    return {
+        getVendors: () => {
+            dispatch(vendors.fetch())
+        },
+        getVendorWeddings: () => {
+            dispatch(vendorWeddingActions.fetch())
+        },
+
+        createOrUpdatePayment: (data) => {
+        //!!!!!! # TODO: keep track of newly created objects and store them to parent so that they are properly passed in as prop
+            console.log("@@@@@@@@@")
+            console.log(data)
+            return dispatch(paymentActions.createOrUpdate(data))
+        },
+    }
+})(AddPayment)
+
+export default AddPayment
